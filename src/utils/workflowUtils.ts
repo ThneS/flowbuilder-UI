@@ -1,5 +1,6 @@
 import yaml from 'js-yaml';
 import useWorkflowStore from '../state/workflowStore';
+import type { Action, Task, WorkflowState } from '../state/workflowStore';
 
 // 导出工作流为JSON
 export const exportWorkflowToJson = (): string => {
@@ -37,8 +38,8 @@ export const importWorkflowFromJson = (jsonStr: string): void => {
     const importData = JSON.parse(jsonStr);
     const { workflow, actions } = importData;
 
-    // 转换普通对象为 Map
-    const actionsMap = new Map(Object.entries(actions || {}));
+    // 转换普通对象为 Map，并确保类型正确
+    const actionsMap = new Map<string, Action>(Object.entries(actions || {} as Record<string, Action>));
 
     useWorkflowStore.setState({
       workflow: workflow || {
@@ -63,8 +64,8 @@ export const importWorkflowFromYaml = (yamlStr: string): void => {
     const importData = yaml.load(yamlStr) as any;
     const { workflow, actions } = importData;
 
-    // 转换普通对象为 Map
-    const actionsMap = new Map(Object.entries(actions || {}));
+    // 转换普通对象为 Map，并确保类型正确
+    const actionsMap = new Map<string, Action>(Object.entries(actions || {} as Record<string, Action>));
 
     useWorkflowStore.setState({
       workflow: workflow || {

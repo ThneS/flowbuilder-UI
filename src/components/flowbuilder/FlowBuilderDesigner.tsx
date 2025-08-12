@@ -3,10 +3,11 @@ import FlowBuilderCanvas from './FlowBuilderCanvas';
 import PropertyEditor from './PropertyEditor';
 import useWorkflowStore from '../../state/workflowStore';
 import { exportWorkflowToJson, exportWorkflowToYaml, importWorkflowFromJson, importWorkflowFromYaml } from '../../utils/workflowUtils';
+import '../../styles/difyTheme.css';
 
 // 工作流设计器主组件
 const FlowBuilderDesigner: React.FC = () => {
-  const { addTask, workflow, setActiveTaskId } = useWorkflowStore();
+  const { addTask, workflow, setActiveTaskId, activeTaskId } = useWorkflowStore();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [importExportModalOpen, setImportExportModalOpen] = useState(false);
   const [importExportFormat, setImportExportFormat] = useState<'json' | 'yaml'>('json');
@@ -48,39 +49,45 @@ const FlowBuilderDesigner: React.FC = () => {
     }
   };
 
+  const [newTaskName, setNewTaskName] = useState('New Task');
+
+  // 添加新任务
+  const handleAddTask = () => {
+    if (newTaskName.trim()) {
+      addTask(newTaskName);
+      setNewTaskName('New Task');
+    }
+  };
+
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
+    <div className="dify-container">
       {/* 顶部导航栏 */}
-      <header className="bg-white border-b border-gray-200 py-3 px-4 flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-bold text-gray-800">FlowBuilder</h1>
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => addTask('New Task')}
-              className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded-md text-sm flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              New Task
-            </button>
-            <button
-              onClick={() => setImportExportModalOpen(true)}
-              className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md text-sm flex items-center"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              Import/Export
-            </button>
-          </div>
-        </div>
-        <div>
+      <header className="dify-header">
+        <h1>Flow Builder</h1>
+        <div className="dify-actions">
+          <button
+            onClick={handleAddTask}
+            className="dify-btn"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            添加任务
+          </button>
+          <button
+            onClick={() => setImportExportModalOpen(true)}
+            className="dify-btn dify-btn-secondary"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            导入/导出
+          </button>
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+            className="dify-btn dify-btn-secondary"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 transition-transform ${sidebarOpen ? 'transform rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform ${sidebarOpen ? 'transform rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
@@ -88,93 +95,198 @@ const FlowBuilderDesigner: React.FC = () => {
       </header>
 
       {/* 主内容区 */}
-      <main className="flex flex-1 overflow-hidden">
+      <main className="dify-main">
+        {/* 侧边栏 - 组件库和任务列表 */}
+        <aside className="dify-sidebar">
+          <div className="dify-section-title">组件库</div>
+          <div className="dify-palette">
+            <div className="dify-card" onClick={() => {
+              if (activeTaskId) {
+                useWorkflowStore.getState().addAction(
+                  activeTaskId,
+                  'builtin',
+                  '内置动作',
+                  100,
+                  100
+                );
+              } else {
+                alert('请先选择一个任务');
+              }
+            }}>
+              <div className="dify-card-title">内置动作</div>
+              <div className="dify-card-type">type: builtin</div>
+            </div>
+            <div className="dify-card" onClick={() => {
+              if (activeTaskId) {
+                useWorkflowStore.getState().addAction(
+                  activeTaskId,
+                  'cmd',
+                  '命令执行',
+                  100,
+                  100
+                );
+              } else {
+                alert('请先选择一个任务');
+              }
+            }}>
+              <div className="dify-card-title">命令执行</div>
+              <div className="dify-card-type">type: cmd</div>
+            </div>
+            <div className="dify-card" onClick={() => {
+              if (activeTaskId) {
+                useWorkflowStore.getState().addAction(
+                  activeTaskId,
+                  'http',
+                  'HTTP 调用',
+                  100,
+                  100
+                );
+              } else {
+                alert('请先选择一个任务');
+              }
+            }}>
+              <div className="dify-card-title">HTTP 调用</div>
+              <div className="dify-card-type">type: http</div>
+            </div>
+            <div className="dify-card" onClick={() => {
+              if (activeTaskId) {
+                useWorkflowStore.getState().addAction(
+                  activeTaskId,
+                  'wasm',
+                  'WASM 动作',
+                  100,
+                  100
+                );
+              } else {
+                alert('请先选择一个任务');
+              }
+            }}>
+              <div className="dify-card-title">WASM 动作</div>
+              <div className="dify-card-type">type: wasm</div>
+            </div>
+          </div>
+
+          <div className="dify-section-title">画布工具</div>
+          <div className="dify-tools">
+            <button className="dify-btn dify-btn-secondary">
+              自动排版
+            </button>
+            <button className="dify-btn dify-btn-secondary">
+              清空画布
+            </button>
+          </div>
+
+          <div className="dify-hint">提示：从组件库选择动作添加到画布；点击一个节点的引脚再点击目标节点可建立连线。</div>
+
+          <div className="dify-section-title">任务列表</div>
+          <div className="dify-list">
+            {workflow.tasks.map(task => (
+              <div
+                key={task.id}
+                onClick={() => setActiveTaskId(task.id)}
+                className={`dify-list-item ${task.id === activeTaskId ? 'active' : ''}`}
+              >
+                <span>{task.name}</span>
+                <button
+                  className="dify-btn dify-btn-danger"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm('确认删除该任务及其所有动作？')) {
+                      useWorkflowStore.getState().deleteTask(task.id);
+                    }
+                  }}
+                >
+                  删除
+                </button>
+              </div>
+            ))}
+            {workflow.tasks.length === 0 && (
+              <div className="dify-hint">暂无任务，请点击"添加任务"按钮创建。</div>
+            )}
+          </div>
+
+          <div className="dify-property-item" style={{ marginTop: '16px' }}>
+            <label className="dify-property-label">新任务名称</label>
+            <input
+              type="text"
+              value={newTaskName}
+              onChange={(e) => setNewTaskName(e.target.value)}
+              className="dify-input"
+              placeholder="输入任务名称"
+            />
+          </div>
+        </aside>
+
         {/* 画布区域 */}
-        <div className="flex-1 relative">
-          <FlowBuilderCanvas />
+        <div className="dify-canvas-wrap">
+          <div className="dify-canvas">
+            <FlowBuilderCanvas />
+          </div>
+          <svg className="dify-wires"></svg>
+          <div className="dify-status">就绪</div>
         </div>
 
         {/* 属性编辑侧边栏 */}
         {sidebarOpen && (
-          <div className="w-80 h-full border-l border-gray-200 bg-white flex-shrink-0 transition-all duration-300 ease-in-out">
+          <div className="dify-property-editor">
             <PropertyEditor />
           </div>
         )}
       </main>
 
-      {/* 任务列表底部栏 */}
-      <footer className="bg-white border-t border-gray-200 py-2 px-4 flex items-center overflow-x-auto">
-        <div className="flex space-x-2">
-          {workflow.tasks.map(task => (
-            <button
-              key={task.id}
-              onClick={() => setActiveTaskId(task.id)}
-              className={`px-3 py-1 rounded-md text-sm whitespace-nowrap ${task.id === useWorkflowStore.getState().activeTaskId ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-            >
-              {task.name}
-            </button>
-          ))}
-        </div>
-      </footer>
-
       {/* 导入导出模态框 */}
       {importExportModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold text-gray-800">Import/Export Workflow</h3>
+        <div className="dify-modal-overlay">
+          <div className="dify-modal">
+            <div className="dify-modal-header">
+              <h3 className="dify-modal-title">导入/导出工作流</h3>
               <button
                 onClick={() => setImportExportModalOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="dify-modal-close"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                ×
               </button>
             </div>
-
-            <div className="p-4 border-b border-gray-200">
-              <div className="flex space-x-2 mb-4">
+            <div className="dify-modal-body">
+              <div className="dify-tabs">
                 <button
                   onClick={() => setImportExportFormat('json')}
-                  className={`px-3 py-1 rounded-md text-sm ${importExportFormat === 'json' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  className={`dify-tab ${importExportFormat === 'json' ? 'active' : ''}`}
                 >
                   JSON
                 </button>
                 <button
                   onClick={() => setImportExportFormat('yaml')}
-                  className={`px-3 py-1 rounded-md text-sm ${importExportFormat === 'yaml' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                  className={`dify-tab ${importExportFormat === 'yaml' ? 'active' : ''}`}
                 >
                   YAML
                 </button>
               </div>
-
               <textarea
                 value={importContent}
                 onChange={(e) => setImportContent(e.target.value)}
-                placeholder={`Paste ${importExportFormat.toUpperCase()} content here for import, or leave empty for export`}
-                className="w-full h-64 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                className="dify-code-editor"
+                placeholder={`在此粘贴 ${importExportFormat.toUpperCase()} 内容进行导入，或留空进行导出`}
               ></textarea>
             </div>
-
-            <div className="p-4 flex justify-end space-x-2">
+            <div className="dify-modal-footer">
               <button
                 onClick={() => setImportExportModalOpen(false)}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md"
+                className="dify-btn dify-btn-secondary"
               >
-                Cancel
+                取消
               </button>
               <button
                 onClick={handleImport}
-                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-md"
+                className="dify-btn"
               >
-                Import
+                导入
               </button>
               <button
                 onClick={handleExport}
-                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md"
+                className="dify-btn"
               >
-                Export
+                导出
               </button>
             </div>
           </div>

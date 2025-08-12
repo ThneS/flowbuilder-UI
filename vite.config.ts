@@ -7,7 +7,6 @@ export default defineConfig({
   esbuild: {
     tsconfigRaw: {
       compilerOptions: {
-        isolatedModules: true,
       },
     },
   },

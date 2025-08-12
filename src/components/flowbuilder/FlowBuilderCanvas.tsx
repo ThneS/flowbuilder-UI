@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import useWorkflowStore from '../../state/workflowStore';
 
 // 连线组件
@@ -7,7 +7,8 @@ const ConnectionLine: React.FC<{
   fromY: number;
   toX: number;
   toY: number;
-}> = ({ fromX, fromY, toX, toY }) => {
+  isActive?: boolean;
+}> = ({ fromX, fromY, toX, toY, isActive = false }) => {
   // 计算贝塞尔曲线控制点
   const controlX1 = fromX + (toX - fromX) / 3;
   const controlY1 = fromY;
@@ -18,9 +19,10 @@ const ConnectionLine: React.FC<{
     <path
       d={`M ${fromX} ${fromY} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${toX} ${toY}`}
       fill="none"
-      stroke="#94a3b8"
-      strokeWidth="2"
+      stroke={isActive ? '#3b82f6' : '#cbd5e1'}
+      strokeWidth={isActive ? 2.5 : 1.5}
       className="pointer-events-none"
+      strokeDasharray={isActive ? '0' : '4 2'}
     />
   );
 };
@@ -32,14 +34,15 @@ const ActionNode: React.FC<{
   y: number;
   name: string;
   type: string;
+  isActive: boolean;
   isBeingDragged: boolean;
-  onDragStart: (id: string) => void;
+  onDragStart: (id: string, e: React.DragEvent) => void;
   onDragEnd: () => void;
   onDrag: (dx: number, dy: number) => void;
   onClick: (id: string) => void;
   onLinkStart: (id: string) => void;
 }> = ({
-  id, x, y, name, type, isBeingDragged,
+  id, x, y, name, type, isActive, isBeingDragged,
   onDragStart, onDragEnd, onDrag, onClick, onLinkStart
 }) => {
   const getTypeColor = (type: string) => {
@@ -58,36 +61,36 @@ const ActionNode: React.FC<{
       className={`cursor-move ${isBeingDragged ? 'opacity-70' : ''}`}
     >
       <rect
-        width="150"
-        height="70"
-        rx="8"
+        width="180"
+        height="80"
+        rx="6"
         fill="white"
-        stroke="#e2e8f0"
-        strokeWidth="2"
-        className="shadow-lg"
+        stroke={isActive ? '#3b82f6' : '#e2e8f0'}
+        strokeWidth={isActive ? 2 : 1}
+        className={`shadow-md ${isActive ? 'ring-2 ring-blue-200' : ''}`}
         onClick={(e) => {
           e.stopPropagation();
           onClick(id);
         }}
       />
       <rect
-        width="150"
-        height="10"
-        rx="4"
+        width="180"
+        height="6"
+        rx="3"
         fill={getTypeColor(type)}
-        className="mb-2"
+        className="mb-4"
       />
       <text
-        x="75"
+        x="90"
         y="35"
         textAnchor="middle"
         dominantBaseline="middle"
-        className="text-gray-800 font-medium"
+        className="text-gray-800 font-medium text-sm"
       >
         {name}
       </text>
       <text
-        x="75"
+        x="90"
         y="55"
         textAnchor="middle"
         dominantBaseline="middle"
@@ -96,23 +99,32 @@ const ActionNode: React.FC<{
         {type}
       </text>
       <circle
-        cx="150"
-        cy="35"
+        cx="180"
+        cy="40"
         r="8"
-        fill="#e2e8f0"
-        stroke="#94a3b8"
-        strokeWidth="1"
+        fill={isActive ? '#dbeafe' : '#f1f5f9'}
+        stroke={isActive ? '#3b82f6' : '#cbd5e1'}
+        strokeWidth={1.5}
         onClick={(e) => {
           e.stopPropagation();
           onLinkStart(id);
         }}
         className="cursor-crosshair"
       />
-      <foreignObject x="0" y="0" width="150" height="70">
+      <circle
+        cx="0"
+        cy="40"
+        r="8"
+        fill={isActive ? '#dbeafe' : '#f1f5f9'}
+        stroke={isActive ? '#3b82f6' : '#cbd5e1'}
+        strokeWidth={1.5}
+        className="pointer-events-none"
+      />
+      <foreignObject x="0" y="0" width="180" height="80">
         <div
           className="h-full w-full"
           draggable
-          onDragStart={() => onDragStart(id)}
+          onDragStart={(e) => onDragStart(id, e)}
           onDragEnd={onDragEnd}
         />
       </foreignObject>
@@ -123,9 +135,9 @@ const ActionNode: React.FC<{
 // 主要画布组件
 const FlowBuilderCanvas: React.FC = () => {
   const svgRef = useRef<SVGSVGElement>(null);
-  const { actions, workflow, linkingFrom, updateAction, linkActions, setActiveTaskId, generateUid, addAction } = useWorkflowStore();
-  const [draggedActionId, setDraggedActionId] = React.useState<string | null>(null);
-  const [dragOffset, setDragOffset] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const { actions, workflow, linkingFrom, updateAction, linkActions, setActiveActionId, generateUid, addAction, activeActionId } = useWorkflowStore();
+  const [draggedActionId, setDraggedActionId] = useState<string | null>(null);
+  const [dragOffset, setDragOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   // 处理拖动开始
   const handleDragStart = (id: string, event: React.DragEvent) => {
@@ -162,7 +174,7 @@ const FlowBuilderCanvas: React.FC = () => {
 
   // 处理节点点击
   const handleNodeClick = (id: string) => {
-    setActiveTaskId(id);
+    setActiveActionId(id);
   };
 
   // 处理连线开始
@@ -181,14 +193,14 @@ const FlowBuilderCanvas: React.FC = () => {
       });
     } else if (event.target === svgRef.current) {
       // 取消选中
-      setActiveTaskId(null);
+      setActiveActionId(null);
     }
   };
 
   // 处理画布拖拽
-  const [panOffset, setPanOffset] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isPanning, setIsPanning] = React.useState(false);
-  const [panStart, setPanStart] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 200, y: 200 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
 
   const handleMouseDown = (event: React.MouseEvent) => {
     if (event.target === svgRef.current && event.button === 1) {
@@ -197,6 +209,14 @@ const FlowBuilderCanvas: React.FC = () => {
         x: event.clientX - panOffset.x,
         y: event.clientY - panOffset.y,
       });
+    } else if (event.button === 0 && event.target === svgRef.current) {
+      // 左键点击画布空白处也取消选中
+      setActiveActionId(null);
+      if (linkingFrom) {
+        useWorkflowStore.setState({
+          linkingFrom: null,
+        });
+      }
     }
   };
 
@@ -221,13 +241,15 @@ const FlowBuilderCanvas: React.FC = () => {
       if (action.flow.next && actions.has(action.flow.next)) {
         const nextAction = actions.get(action.flow.next);
         if (nextAction) {
+          const isActiveConnection = activeActionId === id || activeActionId === action.flow.next;
           connections.push(
             <ConnectionLine
               key={`${id}-${action.flow.next}`}
-              fromX={action.x + 150}
-              fromY={action.y + 35}
-              toX={nextAction.x + 10}
-              toY={nextAction.y + 35}
+              fromX={action.x + 180}
+              fromY={action.y + 40}
+              toX={nextAction.x}
+              toY={nextAction.y + 40}
+              isActive={isActiveConnection}
             />
           );
         }
@@ -238,7 +260,7 @@ const FlowBuilderCanvas: React.FC = () => {
   };
 
   return (
-    <div className="w-full h-full bg-gray-50 overflow-hidden relative">
+    <div className="dify-canvas-container">
       <svg
         ref={svgRef}
         width="100%"
@@ -256,15 +278,15 @@ const FlowBuilderCanvas: React.FC = () => {
           {/* 网格背景 */}
           <pattern
             id="grid"
-            width="20"
-            height="20"
+            width="24"
+            height="24"
             patternUnits="userSpaceOnUse"
           >
             <path
-              d="M 20 0 L 0 0 0 20"
+              d="M 24 0 L 0 0 0 24"
               fill="none"
-              stroke="#e2e8f0"
-              strokeWidth="0.5"
+              stroke="#f1f5f9"
+              strokeWidth="0.8"
             />
           </pattern>
           <rect
@@ -286,38 +308,121 @@ const FlowBuilderCanvas: React.FC = () => {
               y={action.y}
               name={action.name}
               type={action.type}
+              isActive={id === activeActionId}
               isBeingDragged={draggedActionId === id}
-              onDragStart={(id) => handleDragStart(id, { clientX: 0, clientY: 0 } as any)}
+              onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               onDrag={handleDrag}
               onClick={handleNodeClick}
               onLinkStart={handleLinkStart}
             />
           ))}
+
+          {/* 渲染起点节点 */}
+          <g transform={`translate(50, 150)`}>
+            <rect
+              width="120"
+              height="60"
+              rx="4"
+              fill="#ecfdf5"
+              stroke="#10b981"
+              strokeWidth="1.5"
+              className="shadow-sm"
+            />
+            <text
+              x="60"
+              y="25"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="text-gray-800 font-medium text-sm"
+            >
+              开始
+            </text>
+            <text
+              x="60"
+              y="45"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              className="text-xs text-gray-500"
+            >
+              start
+            </text>
+            <circle
+              cx="120"
+              cy="30"
+              r="6"
+              fill="#d1fae5"
+              stroke="#10b981"
+              strokeWidth={1}
+              onClick={(e) => {
+                e.stopPropagation();
+                const firstAction = Array.from(actions.entries())[0];
+                if (firstAction) {
+                  linkActions('start', firstAction[0]);
+                }
+              }}
+              className="cursor-crosshair"
+            />
+          </g>
         </g>
       </svg>
 
-      {/* 添加动作按钮 (固定在右下角) */}
-      <div className="absolute bottom-4 right-4 flex space-x-2">
+      {/* 画布操作工具栏 */}
+      <div className="dify-canvas-tools">
         <button
+          className="dify-btn dify-btn-secondary"
           onClick={() => {
-            const activeTask = workflow.tasks.find(t => t.id === useWorkflowStore.getState().activeTaskId);
-            if (activeTask) {
-              addAction(
-                activeTask.id,
-                'builtin',
-                `Action ${generateUid()}`,
-                panOffset.x + 100,
-                panOffset.y + 100
-              );
-            }
+            // 实现自动排版功能
           }}
-          className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg flex items-center justify-center"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
+          自动排版
         </button>
+        <button
+          className="dify-btn dify-btn-secondary"
+          onClick={() => {
+            // 实现放大功能
+          }}
+        >
+          放大
+        </button>
+        <button
+          className="dify-btn dify-btn-secondary"
+          onClick={() => {
+            // 实现缩小功能
+          }}
+        >
+          缩小
+        </button>
+        <button
+          className="dify-btn dify-btn-secondary"
+          onClick={() => {
+            setPanOffset({ x: 200, y: 200 });
+          }}
+        >
+          重置视图
+        </button>
+      </div>
+
+      {/* 画布提示 */}
+      <div className="dify-canvas-hint">
+        <div className="hint-item">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          拖动节点移动位置
+        </div>
+        <div className="hint-item">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          点击节点右侧连接点创建连线
+        </div>
+        <div className="hint-item">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          滚轮或中键拖动平移画布
+        </div>
       </div>
     </div>
   );

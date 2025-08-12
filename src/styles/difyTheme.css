@@ -1,0 +1,435 @@
+:root {
+  --dify-bg: #ffffff;
+  --dify-fg: #222222;
+  --dify-muted: #666666;
+  --dify-border: #d9d9d9;
+  --dify-brand: #1890ff;
+  --dify-brand-light: #e6f7ff;
+  --dify-canvas: #fafafa;
+  --dify-node: #ffffff;
+  --dify-node-border: #c9c9c9;
+  --dify-node-shadow: rgba(0, 0, 0, 0.06);
+  --dify-pin: #1890ff;
+  --dify-edge: #999999;
+  --dify-edge-active: #1890ff;
+  --dify-danger: #ff4d4f;
+}
+
+/* 基础样式 */
+.dify-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* 顶部导航栏 */
+.dify-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--dify-border);
+  background-color: var(--dify-bg);
+}
+
+.dify-header h1 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--dify-fg);
+}
+
+.dify-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* 按钮样式 */
+.dify-btn {
+  background: var(--dify-brand);
+  color: white;
+  border: 1px solid var(--dify-brand);
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s ease;
+}
+
+.dify-btn:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
+.dify-btn-secondary {
+  background: white;
+  color: var(--dify-brand);
+}
+
+.dify-btn-secondary:hover {
+  background: var(--dify-brand-light);
+}
+
+.dify-btn-danger {
+  background: white;
+  color: var(--dify-danger);
+  border-color: #ffccc7;
+}
+
+.dify-btn-danger:hover {
+  background: #fff2f0;
+}
+
+/* 主内容区 */
+.dify-main {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  height: calc(100vh - 56px);
+  flex: 1;
+  overflow: hidden;
+}
+
+/* 侧边栏 */
+.dify-sidebar {
+  border-right: 1px solid var(--dify-border);
+  padding: 12px;
+  overflow: auto;
+  background-color: var(--dify-bg);
+}
+
+.dify-section-title {
+  font-size: 12px;
+  color: var(--dify-muted);
+  margin: 8px 0;
+}
+
+/* 组件库 */
+.dify-palette {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.dify-card {
+  border: 1px solid var(--dify-border);
+  background: var(--dify-bg);
+  border-radius: 8px;
+  padding: 10px;
+  cursor: grab;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+.dify-card:hover {
+  border-color: var(--dify-brand);
+  box-shadow: 0 2px 8px var(--dify-node-shadow);
+}
+
+.dify-card .dify-card-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.dify-card .dify-card-type {
+  font-size: 11px;
+  color: var(--dify-muted);
+}
+
+/* 工具栏 */
+.dify-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+  margin-bottom: 16px;
+}
+
+/* 任务列表 */
+.dify-list {
+  margin-top: 8px;
+}
+
+.dify-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border: 1px solid var(--dify-border);
+  border-radius: 6px;
+  background: var(--dify-bg);
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dify-list-item.active {
+  border-color: var(--dify-brand);
+  background-color: var(--dify-brand-light);
+}
+
+/* 画布区域 */
+.dify-canvas-wrap {
+  position: relative;
+  height: 100%;
+}
+
+.dify-canvas {
+  position: relative;
+  height: 100%;
+  background: var(--dify-canvas);
+  overflow: auto;
+}
+
+.dify-wires {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* 节点样式 */
+.dify-node {
+  position: absolute;
+  min-width: 160px;
+  max-width: 260px;
+  background: var(--dify-node);
+  border: 1px solid var(--dify-node-border);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px var(--dify-node-shadow);
+  padding: 10px;
+  cursor: move;
+  transition: all 0.2s ease;
+}
+
+.dify-node:hover {
+  border-color: var(--dify-brand);
+}
+
+.dify-node .dify-node-title {
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dify-node .dify-node-meta {
+  display: flex;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--dify-muted);
+  margin-bottom: 8px;
+}
+
+.dify-node .dify-node-properties {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 6px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.dify-node label {
+  font-size: 12px;
+  color: var(--dify-muted);
+}
+
+.dify-node input[type=text],
+.dify-node select,
+.dify-node textarea {
+  width: 100%;
+  padding: 4px 6px;
+  border: 1px solid var(--dify-border);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.dify-node textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+/* 连线引脚 */
+.dify-pins {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+}
+
+.dify-pin {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dify-pin);
+  cursor: crosshair;
+  margin-left: 4px;
+}
+
+/* 状态提示 */
+.dify-status {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  background: var(--dify-bg);
+  border: 1px solid var(--dify-border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 12px;
+  color: var(--dify-muted);
+}
+
+/* 提示文本 */
+.dify-hint {
+  font-size: 12px;
+  color: var(--dify-muted);
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+/* 按钮组 */
+.dify-btn-group {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* 响应式调整 */
+@media (max-width: 768px) {
+  .dify-main {
+    grid-template-columns: 1fr;
+  }
+
+  .dify-sidebar {
+    position: absolute;
+    top: 56px;
+    left: 0;
+    width: 280px;
+    height: calc(100vh - 56px);
+    z-index: 10;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .dify-sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* 属性编辑器样式 */
+.dify-property-editor {
+  padding: 12px;
+  height: 100%;
+  overflow: auto;
+  background-color: var(--dify-bg);
+  border-left: 1px solid var(--dify-border);
+}
+
+.dify-property-group {
+  margin-bottom: 16px;
+}
+
+.dify-property-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--dify-border);
+}
+
+.dify-property-item {
+  margin-bottom: 12px;
+}
+
+.dify-property-label {
+  display: block;
+  font-size: 12px;
+  color: var(--dify-muted);
+  margin-bottom: 4px;
+}
+
+.dify-actions-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  border-top: 1px solid var(--dify-border);
+  background-color: var(--dify-bg);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 模态框样式 */
+.dify-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.dify-modal {
+  background-color: var(--dify-bg);
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  max-width: 500px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dify-modal-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--dify-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dify-modal-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.dify-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--dify-muted);
+}
+
+.dify-modal-body {
+  padding: 16px;
+  flex: 1;
+  overflow: auto;
+}
+
+.dify-modal-footer {
+  padding: 16px;
+  border-top: 1px solid var(--dify-border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 代码编辑器样式 */
+.dify-code-editor {
+  width: 100%;
+  height: 300px;
+  border: 1px solid var(--dify-border);
+  border-radius: 6px;
+  padding: 8px;
+  font-family: monospace;
+  font-size: 12px;
+  resize: vertical;
+}
